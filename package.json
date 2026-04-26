@@ -1,0 +1,14 @@
+{
+  "name": "ai-subject-motion",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "replicate": "^1.0.1"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.2.29"
+  }
+}
