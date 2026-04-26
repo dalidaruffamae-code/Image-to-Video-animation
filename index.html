@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>AI Subject Motion Generator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #0f172a;
+      color: white;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #cbd5e1;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      font-size: 15px;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      background: #22c55e;
+      color: #052e16;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #previewImage,
+    #resultVideo {
+      width: 100%;
+      margin-top: 18px;
+      border-radius: 14px;
+      display: none;
+      background: black;
+    }
+
+    #downloadBtn {
+      display: none;
+      margin-top: 16px;
+      text-align: center;
+      background: #38bdf8;
+      color: #082f49;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 12px;
+      border-radius: 12px;
+    }
+
+    .status {
+      margin-top: 16px;
+      color: #e2e8f0;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .small {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>AI Subject Motion Generator</h1>
+
+    <div class="subtitle">
+      Upload an image and animate the subject inside the image.
+      Background should stay stable.
+    </div>
+
+    <div class="field">
+      <label>Upload Image</label>
+      <input type="file" id="imageInput" accept="image/*" />
+      <div class="small">Use a clear image with one main subject.</div>
+    </div>
+
+    <div class="field">
+      <label>Motion Type</label>
+      <select id="motionType">
+        <option value="wave">Wave hand</option>
+        <option value="smile">Smile</option>
+        <option value="blink">Blink</option>
+        <option value="nod">Nod head</option>
+        <option value="talk">Talking motion</option>
+        <option value="body">Subtle body movement</option>
+        <option value="custom">Custom prompt</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Duration</label>
+      <select id="duration">
+        <option value="5">5 seconds</option>
+        <option value="10">10 seconds</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Custom Prompt</label>
+      <textarea id="customPrompt">The subject moves naturally. Animate only the main subject. Keep the background stable. No camera movement. Smooth realistic motion.</textarea>
+      <div class="small">
+        Example: The woman gently waves her right hand and smiles. Keep the background stable.
+      </div>
+    </div>
+
+    <button id="generateBtn">Generate AI Video</button>
+
+    <div class="status" id="statusText">Upload an image to begin.</div>
+
+    <img id="previewImage" alt="Preview" />
+    <video id="resultVideo" controls></video>
+
+    <a id="downloadBtn" download="ai-subject-motion.mp4">Download Video</a>
+  </div>
+
+  <script>
+    const imageInput = document.getElementById("imageInput");
+    const motionType = document.getElementById("motionType");
+    const duration = document.getElementById("duration");
+    const customPrompt = document.getElementById("customPrompt");
+    const generateBtn = document.getElementById("generateBtn");
+    const statusText = document.getElementById("statusText");
+    const previewImage = document.getElementById("previewImage");
+    const resultVideo = document.getElementById("resultVideo");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
+
+      if (!file) return;
+
+      previewImage.src = URL.createObjectURL(file);
+      previewImage.style.display = "block";
+
+      resultVideo.style.display = "none";
+      downloadBtn.style.display = "none";
+
+      statusText.textContent = "Image ready. Click Generate AI Video.";
+    });
+
+    motionType.addEventListener("change", () => {
+      const prompts = {
+        wave: "The subject gently waves their hand naturally. Animate only the subject. Keep the background stable. No camera movement. Smooth realistic motion.",
+        smile: "The subject smiles naturally with subtle facial movement. Animate only the face and body slightly. Keep the background stable.",
+        blink: "The subject blinks naturally with subtle lifelike facial movement. Keep the background stable.",
+        nod: "The subject gently nods their head naturally. Animate only the subject. Keep the background stable.",
+        talk: "The subject appears to speak naturally with subtle mouth and facial movement. Keep the background stable.",
+        body: "The subject has subtle natural body movement and breathing motion. Keep the background stable.",
+        custom: customPrompt.value
+      };
+
+      if (motionType.value !== "custom") {
+        customPrompt.value = prompts[motionType.value];
+      }
+    });
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+
+        reader.readAsDataURL(file);
+      });
+    }
+
+    generateBtn.addEventListener("click", async () => {
+      const file = imageInput.files[0];
+
+      if (!file) {
+        alert("Please upload an image first.");
+        return;
+      }
+
+      generateBtn.disabled = true;
+      generateBtn.textContent = "Generating...";
+      statusText.textContent = "Uploading image and generating AI video. This may take a few minutes.";
+
+      resultVideo.style.display = "none";
+      downloadBtn.style.display = "none";
+
+      try {
+        const imageBase64 = await fileToBase64(file);
+
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            image: imageBase64,
+            duration: duration.value,
+            motionType: motionType.value,
+            prompt: customPrompt.value
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.details || data.error || "Failed to generate video.");
+        }
+
+        resultVideo.src = data.videoUrl;
+        resultVideo.style.display = "block";
+
+        downloadBtn.href = data.videoUrl;
+        downloadBtn.style.display = "block";
+
+        statusText.textContent = "Done. Preview or download your AI video.";
+      } catch (error) {
+        statusText.textContent = "Error: " + error.message;
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = "Generate AI Video";
+      }
+    });
+  </script>
+</body>
+</html>
